@@ -50,3 +50,58 @@
 - assertAll 
   - 여러 개의 assert구문을 람다식으로 묶어버리면 개별적으로 실행하지 않아도 된다
 - assertThrows(NoSuchElementException.class, 람다); 형태로 작성
+
+
+
+
+
+
+
+## Mockito
+
+- Mock: 진짜 객체와 비슷하게 동작하지만 프로그래머가 그 객체의 행동을 관리하는 객체
+- 이미 구현된 클래스에 대해 mock할 필요는 없다. 하지만 외부 서비스같이 분리되어있는 건 mocking하는 걸 추천
+- 스프링 부트 2.2+ 프로젝트 생성 시 spring-boot-starter-test에서 자동으로  mockito를 추가해줌
+- 다음 세 가지만 알면 테스트를 쉽게 작성할 수 있음
+  - Mock을 만드는 방법
+    - Mock이 어떻게 동작하는지 관리하는 방법
+  - Mock의 행동을 검증하는 방법
+
+###  Mock 객체 만들기
+
+- Mockito.mock() : 메소드로 만드는 법
+  - MemberService memberService = mock(MemberService.class)
+- Mock 애노테이션으로 만들기
+  - Junit 5 extension으로 MockitoExtension을 사용
+  - 필드
+  - 메소드 매개변수
+
+```java
+@ExtendWith(MockitoExtension.calss)
+class StudyServiceTest {
+	
+	@Mock 
+	MemberService memberService;
+	
+	@Mock
+	StudyRepository studyRepository;
+	
+}
+```
+
+
+
+```
+@ExtendWith(MockitoExtension.class)
+class StudyServiceTest{
+	
+	@Test
+	void createStudyService(@Mock MemberService memberService, @Mock StudyService studyService){
+		
+		StudyService studyService = new StudyService(memberService, studyRepository);
+		assertNotNull(studyService);
+	}
+	
+
+}
+```

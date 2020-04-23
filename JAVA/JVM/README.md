@@ -30,15 +30,102 @@
 ### JIT Optimizer 
 
 - JIT 컴파일러는 Client 버전과 Server버전이 있음
+
 - 컴파일은 상위레벨의 언어 -> 기계 의존적인 코드로 변환
+
 - JIT는 각각의 메서드를 모두 컴파일 하지 않음
   - 모든 코드는 초기에 인터프리터에 의해서 시작
+  
   - 해당 코드가 많이 사용될 경우 컴파일 대상
+  
   - 각 메서드에 카운터를 통해 통제
+  
   - 메서드에는 두 개의 카운터가 존재
     - 수행 카운터(invocation counter) : 메서드를 시작할 때 증가
     - 백에지 카운터(backed counter) : 높은 바이트 코드 인덱스에서 낮은 인덱스로 컨트롤 흐름이 변경될 때 증가
       - 메서드 루프가 존재하는지 확인할 때 사용
       - 수행 카운터보다 우선 순위가 높음
+    
   - 카운터 한계치 도달 시 인터프리터가 컴파일을 요청 
+  
+  - 수행 카운터 한계치는 CompileThreshold
+  
+    - CompileThreshold * OnStackReplacePercentage / 100
+  
+      ```
+      JVM에서 옵션으로 지정할 수 있다
+      
+      XX:CompileTYhreadshold=35000
+      XX:OnStackReplacePercentage=80
+      
+      메서드가 3만 5천 번 호출 시 JIT에서 컴파일
+      백에이지 카운터가 35,000 * 80 / 100 =28,000 이 되었을 때 컴파일\
+      ```
+  
+  - 컴파일이 요청되면 큐에 쌓이고 컴파일러 스레드가 큐를 모니터링
+  
+  - 컴파일러 스레드가 바쁘지 않을 때 큐에서 대상을 꺼내 컴파일 시작
+  
+  - 인터프리터는 컴파일이 종료를 기다리지 않고 수행카운터를 리셋 후 인터프리터에서 메서드 수행을 계속 진행
+  
+- OSR : 특별한 컴파일
+
+  - 인터프리터 수행한 코드 중 오랫동안 루프가 지속되는 경우 사용
+    - 최적화되지 않은 것은 코드를 수행하는 것을 확인했을 때 컴파일된 코드로 변경
+
+
+
+### JRockit의 JIT 컴파일 및 최적화 절차
+
+- JVM은 OS에서 작동 가능하도록 자바 바이트 코드를 받아 아키텍처에서 잘 돌아가는 기계어로 변환,수행
+
+- 최적화 단계
+
+  - JRockit runs JIT compilation
+    - 자바 어플리케이션 실행 후 JIT 컴파일 거친 후 실행
+    - JIT를 거친 후 컴파일 된 코드를 호출하기 때문에 처리 성능이 빨라진다.
+    - 어플리케이션이 시작하는 동안 몇 천개의 새로운 메서드가 수행됨
+      - 이로 인해 다른 JVM보다 JRockit JVM이 더 느릴 수 있다.
+      - 지속적으로 수행 시 더 빠른 처리가 가능
+      - 모든 메서드를 컴파일하고 최적화 작업은 JVM 시작을 느리게 만들기 때문에 모든 메서드를 최적화하지 않음 
+  - JRockit monitors threads
+    - sampler thread가 주기적으로 어플리케이션 스레드를 점검
+    - 어떤 메서드가 많이 사용되었는지 확인 후 최적화 대상을 찾음
+  - JRokcit JVM Runs Optimization
+    - sampler thread가 식별한 대상을 최적화
+    - 백그라운드에서 진행, 수행중인 어플리케이션에서 영향을 주지 않음
+
+  ```java
+  class A {
+  	B b;
+  	public void foo(){
+  		y = b.get();
+  		z = b.get();
+  		sum = y + z;
+  	}
+  }
+  
+  class B {
+  	int value;
+  	final int get(){
+  		return value;
+  	}
+  }
+  ```
+
+
+
+- JRockit 컴파일러는 다음과 같이 최적화 한다
+
+  ```java
+  class A{
+  	B b;
+  	public void foo(){
+  		y = b.value;
+  		sum = y + y;
+  	}
+  }
+  ```
+
+  
 

@@ -183,9 +183,52 @@
 - 스레드 목록에 자바 main 스레드 추가 universe 상태가 점검한다.
 - java.lang 패키지에 있는 String, System, Thread, ThreadGroup, Class와 MEthod, Finalizer 클래스 등이 로딩되고 초기화 된다,.
 - HotSpot VM의 시그널 핸들러 스레드가 시작되고 JIT 컴파일러가 초기화 되며, HotSpot 컴파일러 브로커 스레드가 시작된다.
-- JNIEnv 싲가되며 HotSpot VM을 시작한 호출자에게 JNI 요청을 처리할 상황이 되었다고 전달
+- JNIEnv 시작 되며 HotSpot VM을 시작한 호출자에게 JNI 요청을 처리할 상황이 되었다고 전달
 
 
 
 ## JVM 종료될 때 절차
 
+- HotSpot VM의 종료는 DestoryJavaVM 메서드의 종료절차를 따른다.
+  - HotSpot VM이 작동중인 산황에서는 단 하나의 데몬이 아닌 스레드가 수행될 때까지 대기한다
+  - java.lang 패키지에 있는 shudown 클래스의 shutdown 메서드가 수행 
+    - 자바 레벨의 shutdown hook이 수행되고 finalization-on-exit이라는 값이 true일 경우 자바 객체 finalizer를 수행한다.
+  - HotSpot VM 레벨의 shutdown hook을 수행함으로써 Hotspot VM의 종료를 준비
+    - 이 작업은 JVM_OnExit 메서드를 통해 지정 그리고 HotSpot VM의 profiler, stat sampler, watcher, garbage collector 스레드를 종료시킨다.
+    - 위 작업이 종료되면 JVNTI를 비활성화 시키며 Signal 스레드를 종료시킨다.
+  - HotSpot의 JavaThread::exit() 메서드를 호출하여 JNI 처리 블록을 해제한다. 그리고 guard pages, 스레드 목록에 있는 스레드들을 삭제한다. HotSpot VM에서 자바코드를 실행하지 못한다.
+  - HotSpot 스레드를 종료, 이작업을 수행하면 HotSpot VM에 남아 safepoint로 옮기고 JIT 컴파일러 스레드를 중지시킨다
+  - JNI, HotSpot VM, JVMTI barrier 있는 추적 기능을 종료시킨다.
+  - 네이티브 스레드에서 수행하고 있는 스레들을 위해서 HotSpot의 vm eited 값을 설정
+  - 현재 스레드를 삭제한다
+  - 입출력 스트림을 삭제하고 perfMemory 리소스 연결을 해제 한다.jvm 
+  - JVM 종료를 호출한 호출자로 복귀한다.
+
+
+
+### 클래스 로딩 절차
+
+- 주어진 클래스의 이름으로 클래스 패스에 있는 바이너리로 된 자바 클래스를 찾는다
+- 자바 클래스를 정의한다
+- 해당 클래스를 나타내는 java lang 패키지의 Class 클래스의 객체를 생성한다.
+- 링크 작업이 수행된다. 이 단계에서 static 필드를 생성 및 초기화 하고 메서드 테이블을 할당한다
+- 클래스의 초기화가 진행되며 클래스 static 블로가 static 필드가 먼저초기화 
+- loading -> linking -> initializing 순으로 진행된다고 기억하자
+
+```
+클래스 로딩 중 발생되는 에러
+
+NoClassDefFoundError : 클래스 파일을 찾지 못한경우
+ClassFormatError : 클래스 포맷이 잘못된 경우
+UnsupportedClassVersionError : 상위 버전 JDK에서 컴파일 한 클래스를 하위 버전에서 실행하려는 경우
+ClassCircularityError : 부모 클래스를 로딩하는 데 문제가 있는 경우
+IncompatibleClassChangeError : 부모가 클래스인데 implements 하는 경우나 부모가 인터페이스인데 extends 하는 경우
+VerifyError : 클래스 파일의 semantic 상수풀, 타입 등의 문제가 있을 경우
+```
+
+- 클래스 로더가 클래스를 찾고 로딩할 때 다른 클래스 로더에 클래스를 로딩해달라는 경우가 있다.
+  - 이를 class loader delegation 
+  - 클래스 로더는 계층적으로 구성
+  - 기본 클래스 로더는 시스템 클래스 로더
+    - main 메서드가 있는 클래스와 클래스 패스에 있는 클래스들이 이 클래스 로더에 속함
+  - 그 하위에 어플리케이션 클래스 로더는 SE의 기본 라이브러리에 있는 것이 될 수 있고 개발자가 임의로 만든 것일 수 있다.

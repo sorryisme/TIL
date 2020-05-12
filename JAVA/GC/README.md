@@ -24,8 +24,10 @@
 
     - -q: 클래스나 JAR 파읾 명, 인수 등을 생략하고 내용을 나타낸다.(프로세스 id만 나타낸다)
 - -m : main 메서드에 지정한 인수들을 나타낸다
+  
     - -l : 어플리케이션 main 클랫래스나 어플리케이션 JAR 파일 전체 경로 이름을 나타낸다
 - -v : JVM에 전달된 자바 옵션 목록을 나타낸다.
+  
     - -V : JVM의 플래그 파일을 통해 전달된 인수를 나타낸다
 - -option : 자바 옵션을 이 옵션 뒤에 지정할 수 있다.
 
@@ -109,5 +111,93 @@ jstat -<option> [-t] [-h<lines] <vmid> [<interval> [<count]]
 ### verbosegc 옵션으로 gc 로그 남기기
 
 - 자바 수행시 -verbosegc 옵션을 추가하면 된다.
--  
+- [GC 8128K -> 848K(130112K), 0.0090257 secs]
+  -  Young 영역에 마이너 GC가 발생 8,128kbyte에서 848kbyte로 축소
+  -  전체 할당된 크기는 130,112kbyte
+  -  GC수행 시간은 0.0090257초
+- 언제 GC가 발생했는지 알 수 없음
+  - -XX:+PrintGCTimeStampls 옵션을 적용
+- 좀 더 상세한 정보들을 확인하고 싶다면
+  - -XX:+PrintHeapAtGC
+- 간결하고 보기 좋은 옵션
+  - -XX:+PrintGCDetails
 
+
+
+### 메모리릭 
+
+- 실제로 1%도 안되는 현상
+- Young과 Old 영역의 비율은 1:2 ~ 1:9
+- 메모리릭을 확인하려면 Full GC 이후 메모리 사용량을 확인(80% 이상인지)
+
+
+
+### GC 튜닝 꼭 해야할까?
+
+- 운영 중인 자바 시스템에 기본적으로 다음과 같이 적용되어있어야한다
+  - -Xms, -Xmx
+  - -server 옵션
+  - 타임아웃 관련 로그
+    - DB 작업과 관련된 타임아웃
+    - 다른 서버와의 통신시 타임아웃
+- 다음과 같은 문제가 있다면 GC 튜닝을 하는 것이 좋다
+  - JVM 메모리 크기도 지정하지 않았으며
+  - Timeout이 지속적으로 발생한다면
+- 가장 중요한 건 객체 생성을 줄이는 작업을 진행해야한다
+  - StringBuilder, StringBuffer 사용
+  - 로그를 최대한 적게 쌓도록 하기
+- GC 튜닝의 목적
+  - Old 영역으로 넘어가는 객체를 최소화
+  - Full GC 실행시간을 줄이는 것
+
+
+
+### Old 영역으로 넘어가는 객체 수 최소화
+
+- Old영역의 GC는 New 영역에 비해 시간이 오래 소요된다.
+- New 영역의 크기를 조절하면 가능하다
+
+### Full GC 시간 줄이기
+
+- Full GC는 Young GC에 비해 길다
+- Full GC실행이 오래 소요되면 타임아웃 발생 가능성이 높다
+- Old 영역의 크기를 적절하게 잘 적용해야한다
+
+
+
+### 성능에 영향을 주는 옵션들
+
+| 구분             | 옵션              | 설명                             |
+| ---------------- | ----------------- | -------------------------------- |
+| 힙의 영역의 크기 | -Xms              | JVM 시작히 힙 영역의 크기        |
+|                  | -Xmx              | 최대 힙 영역 크기                |
+| New 영역의 크기  | -XX:NewRatio      | New 영역과 Old 영역의 비율       |
+|                  | -XX:NewSize       | New 영역의 크기                  |
+|                  | -XX:SurvivorRatio | Eden 영역과 Survivor 영역의 비율 |
+
+- -Xms, -Xmx,  NewRaio 옵션에 따라 GC 성능차이가 발생될 가능성이 높음
+
+
+
+### GC 방식에 따른 옵션
+
+| 구분                   | 옵션                                                         | 비고 |
+| ---------------------- | ------------------------------------------------------------ | ---- |
+| Serial GC              | -XX:+UseSerialGC                                             |      |
+| Parallel GC            | -XX:+UseParallelGC<br />-XX:ParallelGCThreads=value          |      |
+| Parallel Compacting GC | -XX:+UIseParalllelOldGC                                      |      |
+| CMS GC                 | -XX:+UseConcMarkSweepGC<br />-XX:+UseParNewGC<br />-XX:+CMSParallelRemarkEnabled<br />-XX:CMSInitiatingOccupancyFranction=value<br />-XX:+UseCMSInitiatingOccupancyOnly |      |
+| G1                     | -XX:+UnlockExperimentalVMoptions<br />-XX:+UseG1GC           |      |
+
+
+
+### GC 튜닝절차
+
+- GC 상황 모니터링
+- 모니터링 결과 분석 후 튜닝여부 결정
+  - GC 수행 시간이 1~3초 또는 10초가 넘어가면 GC 튜닝진행
+  - 1~2GB로 지정하고 OutOfMemoryError 발생 시 힙 덤프로 원인 확인
+  - 힙 덤프는 jmap 명령으로 생성가능하다 운영중에는 사용금지(자바 프로세스가 멈춤)
+- GC 방식/메모리 크기 지정
+- 결과분석
+- 결과 만족 시 반영

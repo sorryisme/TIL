@@ -201,3 +201,46 @@ jstat -<option> [-t] [-h<lines] <vmid> [<interval> [<count]]
 - GC 방식/메모리 크기 지정
 - 결과분석
 - 결과 만족 시 반영
+
+
+
+### 1,2 단계 GC 상황 모니터링 및 결과 분석
+
+```jade
+jstat -gcutil 21719 1s
+```
+
+- YGC와 YGCT의 값을 확인
+  - YGCT 값을 YGC로 나누면 Young 영역에서 수행되는 평균 시간을 확인한다
+- FGCT와 FGC 값을 확인
+  - FGCT 값을 FGC로 나누면 평균 Full GC를 확인할 수 있다.
+- 다음 조건을 만족하면 튜닝이 필요없음
+  - Minor GC의 처리 시간이 빠르다(50ms 내외)
+  - Minor GC 주기가 빈번하지 않다(10초 내외)
+  - Full GC 처리 시간이 빠르다(1초 이내)
+  - Full GC 주기가 빈번하지 않다(10분에 1회)
+- 그 외 확인사항
+  - GC가 수행되는 횟수도 확인
+    - New 영역의 크기가 너무 작게 잡혀있으면 Minor GC 발생 빈도가 매우 높음
+    - Old 영역에 넘어가는 객체 개수가 증가
+    - jstat의 gccapacity 옵션으로 각 영역의 점유여부를 확인
+
+### 3-1. GC 방식 지정
+
+- Serial GC는 운영에서 사용불가
+- 가장 좋은 방법은 하나씩 다 적용해보는 것
+- Parallel GC와 CMS GC의 가장 큰 차이는 압축 작업 여부
+  - 메모리 단편화 제거로 Parallel GC는 메모리 할당이 빠르다
+  - CMS는 Concurrent mode Failure이라는 경고가 발생하며 압축작업 진행
+
+
+
+### 3-2. 메모리 크기
+
+- 메모리 크기가 크면 
+  - GC 발생 횟수 감소
+  - GC 수행 시간이 길어진다
+- 메모리 크기가 작으면
+  - GC 발생 횟수는 증가.
+  - GC 수행 시간은 감소한다.
+

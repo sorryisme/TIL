@@ -1,0 +1,300 @@
+
+
+
+
+## 02. 스프링은 객체 컨테이너
+
+상속 계층도는 다음과 같음
+
+- BeanFactory
+- ListableBeanFactory
+- ApplicationContext
+- ConfigurableApplicationContext
+- AbstractApplicationContext
+- GenericApplicationContext
+  - GenericXmlAplicationContext
+  - AnnotationConfigApplicationContxt
+  - GenericGroovyApplicationContext
+
+
+
+### 2.1 싱글톤 객체 
+
+```java
+GenericXmlApplicationContext ctx = 
+	new GenericXmlApplicationContext("classpath:applicationContext.xml");
+	
+	Greeter g1 = ctx.getBean("greeter", Greeter.Class);
+	Greeter g2 = ctx.getBean("greeter", Greeter.Class);
+	
+```
+
+- g1과 g2는 동일한 객체
+- 스프링은 별도 설정 없이 한개의 빈 객체만 생성한다
+
+
+
+## 06. 빈 라이프 사이클과 범위
+
+스프링 컨테이너는 초기화와 종료라는 라이프 사이클 
+
+1. 컨테이너 초기화
+2. 컨테이너 사용
+3. 컨테이너 종료
+
+
+
+- 스프링 컨테이너는 빈 객체의 라이프사이클을 관리
+  - 객체생성
+  - 의존설정
+  - 초기화
+  - 소멸
+- 스프링 컨테이너를 초기화 할 때 
+  - 가장 먼저 빈 객체를 생성
+  - 태그로 지정한 의존을 설정
+  - 빈 객체의 초기화를 수행
+- 빈 객체를 초기화하고 소멸하기 위해 지정한 메서드를 호출
+  - InitializingBean
+  - DisposableBean
+- 초기화와 소멸과정이 필요한 예는 커넥션 풀
+
+
+
+## 6. AOP
+
+```java
+ImpleCalculator implCal = new ImpleCalculator();
+long start1 = System.currentTimeMillis();
+long fourFactorial1 = implCal.factorial(10);
+long end1 = System.currentTimeMillis();
+System.out.println(" 1번 실행 시간  "+ (end1 - start1));
+
+RecCalculator recCal = new RecCalculator();
+long start2 = System.currentTimeMillis();
+recCal.factorial(10);
+long end2 = System.currentTimeMillis();
+System.out.println(" 2번 실행 시간  "+ (end2 - start2));
+```
+
+- 코드 중복으로 인해 수정을 할 경우 유지보수할 곳이 늘어난다 
+- 코드 중복을 제거하는 방법이 바로 프록시 객체
+
+```java
+public class ExTimeCalculator implements Calculator {
+	
+	private Calculator delegate;
+	
+	public ExTimeCalculator(Calculator delegate) {
+		this.delegate = delegate;
+	}
+	
+	@Override
+	public long factorial(long num) {
+		long start = System.nanoTime();
+		long result = delegate.factorial(num);
+		long end = System.nanoTime();
+		System.out.println(" 실행 시간 : " + (end - start));
+		
+		return result;
+	}
+}
+```
+
+- 생성자를 통해 객체를 전달 받아 필드에 할당한 뒤 실행하는 메서드를 구현
+
+### 결과 도출
+
+- 기존 코드를 변경하지 않고 실행 시간을 출력
+- 실행 시간을 구하는 코드의 중복을 제거
+- 기능 자체를 구현하기 보다 다른 객체에 factorial 실행을 위임
+- 계산 기능 외에 다른 부가적인 기능을 실행
+
+
+
+### AOP 
+
+- 여러 객체에 공통으로 적용할 수 있는 기능을 구분하여 적용
+- 핵심 기능에 공통 삽입 방법
+  - 컴파일 시점에 코드에 공통기능 추가
+    - AOP 개발 도구가 소스 코드 컴파일 전에 공통 구현 코드를 소스에 삽입 하는 방식
+  - 클래스 로딩 시점에 바이트 코드에 공통 기능 추가
+    - 바이트 코드에 공통 기능을 클래스에 삽입하는 방식
+  - 런타임에 프록시 객체를 생성하여 공통기능 추가
+    - 스프링이 제공하는 방식이 3번째 방식
+
+
+
+### AOP 용어
+
+- Aspect : 여러 객체에 공통으로 적용하는 기능을 Aspect , 트랜잭션이나 보안이 예
+
+- JoinPoin : Advice 적용 가능한 지점, 메서드 호출, 필드값 변경 등이 해당
+
+- PointCut : joinPoint의 부분 집합,실제로 Advice가 적용되는 JoinPoint
+
+- Advice : 언제 공통 관심 기능을 핵심 로직에 적용할지 정의
+
+- Weaving : Advice를 핵심 로직 코드에 적용하는 것을 Weaving
+
+  
+
+### Advice
+
+- Before Advice : 메서드 호출 전
+- After Returning Advice : 익센셥 없이 실행된 이후 공통기능 실행
+- After Throwing Advice : 익셉션이 발생하면 실행
+- After Adivce : 익셉션 여부 상관없이 공통기능 실행
+- Around Advice : 객체 메서드 실행 전 또는 익셉션 발생 시점에 공통기능 실행
+
+
+
+## AOP 구현
+
+구현 절차
+
+- 공통 기능을 제공하는 Aspect를 구현
+- Aspect를 어디(Pointcut)에 적용할지 설정, 즉 Advice를 설정
+  
+
+구현방법
+
+- XML
+- @Aspect애노테이션
+
+
+
+### [JoinPoint 접근](https://blog.outsider.ne.kr/844)
+
+- ProceedingJoinPoin는 JoinPoint의 하위 클래스
+  - getArgs : 메서드 아규먼트 반환
+  - getThis : 프록시 객체 반환
+  - getTarget : 대상 객체 반환
+  - getSignature : 어드바이스 되는 메서드 설명
+  - toString : 어드바이스 메서드의 유용한 설명 호출
+
+
+
+### XML 방식
+
+- Aspect 구현 클래스 작성
+
+```java
+public class ExeTimeAspect {
+	public Object measure(ProceedingJoinPoint joinPoint) throws Throwable {
+		
+		long start = System.nanoTime();
+		try {
+			Object result = joinPoint.proceed();
+			return result;
+		} finally {
+			long finish = System.nanoTime();
+			Signature sig = joinPoint.getSignature();
+			System.out.printf("%s.%s(%s) 실행시간 : %d ns\n", 	joinPoint.getTarget().getClass().getSimpleName() , sig.getName(), Arrays.toString(joinPoint.getArgs()));
+			
+		}
+	}
+}
+```
+
+- XML 을 통한 설정
+
+```xml
+<beans:bean id="exeTimeAspect" class="com.spring4.demo.ExeTimeAspect"/>
+<!-- 공통 기능을 제공할 클래스를 빈으로 등록-->
+
+<aop:config>
+    <aop:aspect id="measureAspect" ref="exeTimeAspect">
+        <!--공통 기능으로 사용할 빈 지정, 즉 Aop 적용할 빈 등록-->
+        <aop:pointcut id="publicMethod"	expression="execution(public * chap07..*(..))"/>
+        <!-- 포인트 컷을 정의, expression으로 적용범위 지정-->
+        <aop:around pointcut-ref="publicMethod" method="measure"/>
+        <!-- advice 지정, 언제 핵심로직을 지정할지 정의 -->
+    </aop:aspect>
+</aop:config>	
+```
+
+- expression 예시 
+
+  > ​	expression="execution( \*[return type] com.xyz.myapp.service.\*[class].\*[method](..)[parameter])"/>
+
+- [expression 참고주소](https://cocy.tistory.com/101)
+
+
+
+실행시 다음과 같은 순서로 실행된다.
+
+1. Main 실행
+2. 프록시 measure
+3. proccedingJoinPoint.procced 
+4. [핵심로직]
+
+
+
+### AOP 구현 : @Aspect 애노테이션
+
+```java
+@Aspect
+public class ExeTimeAspect2 {
+
+	@Pointcut("execution(* com.spring4.demo.*.*(..))")
+	private void publicTarget() {}
+	
+	@Around("publicTarget()")
+	public Object measure(ProceedingJoinPoint joinPoint) throws Throwable {
+		
+		long start = System.nanoTime();
+		try {
+			Object result = joinPoint.proceed();
+			return result;
+		} finally {
+			long finish = System.nanoTime();
+			Signature sig = joinPoint.getSignature();
+			System.out.printf("%s.%s(%s) 실행시간 : %d ns\n", joinPoint.getTarget().getClass().getSimpleName() , sig.getName(), Arrays.toString(joinPoint.getArgs()),(finish-start));
+			
+		}
+	}
+}
+```
+
+```xml
+<aop:aspectj-autoproxy/>
+<bean id="exeTimeAspect" class="com.spring4.demo.ExeTimeAspect2"/>
+```
+
+- aop:aspectj-autoproxy 를 사용할 경우 @Aspect  애노테이션이 적용된 객체를 Advice로 사용한다
+
+
+
+### 프록시 생성방식
+
+```java
+//수정 전 
+Calculator implCal = ctx.getBean("implCal", Calculator.class);
+
+// 수정 후 
+ImplCalculator implCal = ctx.getBean("implCal", ImplCalculator.class);
+```
+
+- 에러 발생
+  - 프록시 객체를 생성할 때 Bean 객체가 인터페이스를 상속 받고 있으면  인터페이스로 프록시 생성
+  - 인터페이스가 아닌 클래스를 이용해 프록시 생성시 proxy 설정을 추가해야한다
+
+```xml
+<aop:config proxy-target-class="true">
+</aop>
+
+<aop:aspectj-autoproxy proxy-target-class="true"/>
+```
+
+- 위와 같이 설정하면 인터페이스가 아닌 클래스 타입을 통해 객체를 생성한다
+
+
+
+
+
+
+
+
+
+
+

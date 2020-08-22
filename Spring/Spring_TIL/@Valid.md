@@ -55,7 +55,9 @@ public String checkPersonInfo(@Valid PersonForm personForm, BindingResult bindin
 - 에러발생 시 발생된 에러 결과를 form 페이지에 표시한다
 
 ```html
- <td th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name Error</td>
+<form id='formData' th:action="@{/member/signUp}" th:object="${memberDTO}" method="post" enctype="multipart/form-data">
+
+<td th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name Error</td>
 ```
 
 

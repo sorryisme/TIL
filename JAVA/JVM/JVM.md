@@ -117,3 +117,4 @@
   - Resolve : 심볼릭 메모리 레퍼런스를 메소드에 있는 실제 레퍼런스(Heap)와 교체(Optional)
 - 초기화 
   - static 변수를 할당 , static 블럭 또한 실행
+

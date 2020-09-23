@@ -145,4 +145,83 @@
     Book book = (Book)constructor.newInstance();
     ```
 
+  -  static 변수일 때는 따로 객체를 주지 않아도 가져오거나 값을 넣을 수 있다.
+
+    ```java
+    Field a = Book.class.getDeclaredField("A");
+    System.out.println(a.get(null));
+    a.set(null, "BBBBB");
+    System.out.println(a.get(null));
+    ```
+
+  - 특별한 인스턴스에 해당하는 메소드인 경우, 객체와 파라미터를 넘겨준다
+
+    ```java
+    Method c = Book.class.getDeclaredMethod("c");
+    c.invoke(book);
+    ```
+
+  - 메소드 실행 후 값을 리턴해주는 메소드의 경우 형변환하여 저장이 가능하다
+
+    ```java
+    Method c = Book.class.getDeclaredMethod("sum", int.class, int.class);
+    int invoke = (int)c.invoke(book, 1,2);
+    System.out.println(invoke);
+    ```
+
     
+
+### DI 프레임워크 만들기
+
+- Inject라는 애노테이션을 만들어 필드에 주입하는 컨테이너 서비스 만들기
+
+  ```java
+  public class ContainerService {
+  
+  	public static <T> T getObject(Class<T> classType) {
+  		T instance = createInstance(classType);
+  		Arrays.stream(classType.getDeclaredFields()).forEach(f -> {
+  			Inject annotation = f.getAnnotation(Inject.class);
+  			if( annotation != null) {
+  				Object fieldInstance = createInstance(f.getType());
+  				f.setAccessible(true);
+  				try {
+  					f.set(instance, fieldInstance);
+  				} catch (IllegalArgumentException e) {
+  					throw new RuntimeException(e);
+  				} catch (IllegalAccessException e) {
+  					throw new RuntimeException(e);
+  				}
+  			}
+  		});
+  		
+  		return instance;
+  	}
+  	
+  	private static <T> T createInstance(Class<T> classType) {
+  		try {
+  			return classType.getConstructor(null).newInstance();
+  		} catch (Exception e) {
+  			e.printStackTrace();
+  			return null;
+  		}
+  	}
+  }
+  ```
+
+
+
+### 리플렉션 주의사항
+
+- 지나친 사용은 성능 이슈를 야기할 수 있음
+- 컴파일 타임에 확인하지 않고 런타임시에만 발생하는 문제를 만들 가능성이 있다.
+- 접근 지시자를 무시할 수 있다.
+
+
+
+### 사용 예시
+
+- 스프링 : 의존성 주입
+- 스프링 : MVC 뷰에서 넘어온 데이터를 객체에 바인딩
+- 하이버네이트 : @Entity에 Setter가 없으면 리플렉션 사용
+

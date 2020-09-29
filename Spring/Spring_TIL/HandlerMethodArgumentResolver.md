@@ -6,8 +6,6 @@
 
 - 인자값에 대한 값을 매핑해줄 때 사용하는 인터페이스
 
-- 스프링에서는 Argu
-
 - PathVariable은 PathVariableMethodArgumentResolver를 통해 구현된다
 
   ```java
@@ -61,6 +59,7 @@
   	}
   }
   ```
+
 
 
 

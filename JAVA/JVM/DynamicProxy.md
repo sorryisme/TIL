@@ -68,3 +68,34 @@ public class BookProxy implements BookService{
 - 프록시 패턴은 번거롭다 ( 부가적인 기능을 추가하고 싶다면 객체를 생성, 위임코드 중복 발생, 메소드 추가 때 마다 프록시에 추가)
   - 동적으로 런타임에 생성하는 방법 => 자바 Reflection에서 처리 , 다이나믹 프록시
 
+
+
+### 다이나믹 프록시
+
+- 런타임에 특정 인터페이스들을 구현하는 클래스 또는 인스턴스를 만드는 기능
+- 프록시 인터페이스 프록시 만들기
+  - Object Proxy.newProxyInstance(ClassLoader, interfaces, InvocationHandler)
+  - 유연한 구조가 아님 -> 스프링 AOP 
+
+```java
+BookService bookService = Proxy.newProxyInstance(BookService.class.getClassLoader(), new Class[]{BookService.class}, new InvocationHandler(){ 
+			BookService bookservice = new DefaultBookService();
+  		@Override
+  		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        	// 부가 기능 추가
+         	return method.invoke(bookService, args);
+      }
+	
+});
+```
+
+- 실제 동작할 부가적인 메서드 구현해야함( 프록시에서 실행할 부가적인 기능)
+- 코드가 점점 커지는 문제가 발생할 수 있어 AOP를 통해 유연하게 처리 가능
+- 다이나믹 프록시는 **인터페이스가 아닌 클래스 기반 프록시 기반 클래스**를 생성 불가(자바 다이나믹 프록시의 제약사항)
+
+
+
+
+
+
+

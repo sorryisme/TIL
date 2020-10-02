@@ -95,7 +95,46 @@ BookService bookService = Proxy.newProxyInstance(BookService.class.getClassLoade
 
 
 
+#### 클래스 프록시가 필요하다면
+
+- CGlib
+
+  - 스프링, 하이버네이트가 사용하는 라이브러리
+
+    ```java
+    MethodInterceptor handler = new MethodInterceptor() {
+    			BookService bookService = new BookService();
+    		
+    			@Override
+    			public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+    				
+    				return method.invoke(bookService, args);
+    			}
+    		};
+    		BookService bookService = (BookService) Enhancer.create(BookService.class,handler);
+    ```
+
+- Bytebuddy
+
+  ```java
+  Class<? extends BookService> proxyClass = new ByteBuddy().subclass(BookService.class)
+  																										.make().load(BookService.class.getClassLoader()).getLoaded();
+   
+  proxyClass.getConsjtructor(null).newInstance();
+  ```
+
+  
+
+- 상속을 허용하지 않는 경우 사용불가
+  - final 클래스
+  - 생성자가 private default 생성자
 
 
 
+#### 다이나믹 프록시 사용처
+
+- 스프링 데이터 JPA
+- 스프링 AOP
+- Mockito
+- 하이버네이트 lazy Initialization
 

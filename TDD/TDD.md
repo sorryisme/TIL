@@ -1,8 +1,12 @@
 # 테스트하는 다양한 방법
 
+- [강좌 : 더 자바, 애플리케이션을 테스트하는 다양한 방법](https://www.inflearn.com/course/the-java-application-test)
+
 
 
 ## JUnit5
+
+![image1](./img/image1.jpg)
 
 - Jupiter : Test Engine API 구현체 Junit5를   제공
 - Vintage : Junit 4와 3를 지원하는 TestEngine 구현체
@@ -19,7 +23,7 @@
 - @Test
 - @BeforeAll / @AfterAll
   - 테스트 실행 전/ 실행 후 단 한 번만 작동한다
-  - 반드시 static으로 선언해야한다
+  - 반드시 static void으로 선언해야한다
 - @BeforeEach / @AfterEach
   - 모든 테스트 실행할 때 각각 테스트 이전과 이후에 실행한다
 - @Disabled

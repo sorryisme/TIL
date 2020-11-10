@@ -57,7 +57,17 @@
 
 
 
+## 조건에 따라 테스트 실행
 
+- 특정한 OS, 특정한 자바버전, 환경변수에 따라 실행 여부를 결정할 수 있음
+  - assumeTrue() : 조건에 맞으면 아래 테스트 코드 실행
+  - assumingThat() : 조건에 맞으면 안에 작성된 코드가 실행
+- @Enabled와 @Disabled
+  - OnOs : 운영체제 입력
+  - OnJre : 특정 자바 버전
+  - IfSystemProperty :
+  - IfEnvironmentVariable : 환경변수 매칭 값
+  - If
 
 
 
@@ -95,7 +105,7 @@ class StudyServiceTest {
 
 
 
-```
+```java
 @ExtendWith(MockitoExtension.class)
 class StudyServiceTest{
 	

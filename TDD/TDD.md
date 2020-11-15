@@ -71,6 +71,55 @@
 
 
 
+## 태깅과 필터링
+
+- @Tag
+
+  - 테스트 실행할 때 지정한 테스트만 실행되도록 처리할 수 있
+  - 메이븐에서 프로파일로 테스트 태깅을 지정해줄 수 있음
+
+- 커스텀 태그
+
+  - 애노테이션을 직접 만들어서 사용가능
+
+    ```java
+    @Target(ElementType.Method)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Test
+    @Tag("test")
+    public @interface FastTest {
+    
+    }
+    ```
+
+
+
+## 테스트 반복하기
+
+### @RepeatedTest
+
+- 반복 횟수와 반복 테스트 이름을 설정할 수 있다.
+  - {displayName}
+  - {currentRepetition}
+  - {totalRepetitions}
+- RepetitionInfo 타입의 인자를 받을 수 있다.
+  - 메소드 인자에 변수를 선언하여 현재 실행 카운트 / 토탈 카운트 정보를 확인할 수 있음
+
+
+
+### @ParameterizedTest
+
+- @ValueSource
+  - 파라미터들을 정의할 수 있음
+
+- 테스트에 여러 매개변수를 대입해가며 반복 실행한다.
+  - {displayName}
+  - {index}
+  - {arguments}
+  - {0}, {1}....
+
+
+
 ## Mockito
 
 - Mock: 진짜 객체와 비슷하게 동작하지만 프로그래머가 그 객체의 행동을 관리하는 객체

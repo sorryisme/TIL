@@ -111,12 +111,28 @@
 
 - @ValueSource
   - 파라미터들을 정의할 수 있음
-
 - 테스트에 여러 매개변수를 대입해가며 반복 실행한다.
   - {displayName}
   - {index}
   - {arguments}
   - {0}, {1}....
+- 인자값들의 소스
+  - @ValueSource
+  - @NullSource, @EmptySource, @NullAndEmptySource
+  - @EnumSource
+  - @MethodSource
+  - @CvsSource, @CvsFileSource
+  - @ArgurmentSource
+- 인자값 타입변환
+  - 암묵적인 타입변환
+  - 명시적인 타입변환  : 한개의 아규먼트 
+    - SimpleArgumentconverter 상속받은 구현체 제공
+    - @ConvertWith
+    - ex:) @ConvertWith(StudyConverter.class) Study study
+  - ArgumentsAccessor argumentsAccessor
+    - argument 순서대로 가져올 수 있음
+  - ArguementsAggregater 인터페이스 :  두 개 이상 아규먼트
+    - @AggregateWith
 
 
 

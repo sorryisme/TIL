@@ -1,4 +1,4 @@
-# 테스트하는 다양한 방법
+#  테스트하는 다양한 방법
 
 - [강좌 : 더 자바, 애플리케이션을 테스트하는 다양한 방법](https://www.inflearn.com/course/the-java-application-test)
 
@@ -168,7 +168,16 @@ class StudyServiceTest {
 }
 ```
 
+- Mock 애노테이션을 사용하기 위해 @ExtendWith를 사용
 
+> Mockito로 객체생성
+
+```java
+StudyRepository sutdyRepository = Mockito.mock(StudyRepository.class);
+```
+
+- mock 메서드를 통해 객체를 생성할 수 있음(인터페이스)
+  - 코드를 줄이기 위해 @Mock을 사용
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -184,3 +193,104 @@ class StudyServiceTest{
 
 }
 ```
+
+- MeberService와 StudyService는 인터페이스이기 때문에 구현이 불가하다
+  - Mock 객체를 통해 임의의 객체를 생성해서 전달한다
+
+
+
+### Mock 객체 Stubbing
+
+- Stubbing이란 Mock 객체의 행동을 조작하는 것
+
+- 모든 Mock 객체의 행동
+  - Null을 리턴한다(Optional => Optional.empty 리턴)
+  - Primitive 타입은 기본 Primitive 값
+  - 콜렉션은 비어있는 콜렉션
+  - Void 메서드는 예외를 던지지 않고 아무런 일도 발생하지 않는다
+- Mock 객체를 조작해서
+  - 특정한 매개변수를 받은 경우 특정한 값을 리턴하거나 예외를 던지도록 만들 수 있다.
+  - Void 메소드 특정 매개변수를 받거나 호출된 경우 예외를 발생시킬 수 있다.
+  - 메소드가 동일한 매개변수로 여러번 호출될 때 각자 다르게 호출 되도록 조작할 수도 있다.
+
+
+
+#### Stubbing 사용 
+
+> When(Stubbing)
+
+```java
+when(memberService.findById(1L)).thenReturn(member);
+```
+
+- memberService가 호출될 때 다음과 같이 값을 리턴해라
+- 파라미터를 범용적으로 사용하고 싶으면 Matcher 사용
+  - any()
+
+
+
+#### 예외 처리
+
+> when 예외
+
+```
+when(memberService.findById(1L)).thenThrow(new RuntimeException());
+```
+
+- 예외를 강제로 발생시킴
+
+> doThrow 
+
+```
+doThrow(new IllegalArgunmentException()).when(memberService).validate(1L);
+```
+
+
+
+
+
+#### 같은 메소드를 여러번 호출
+
+```
+when(memberService.findById(any()))
+					.thenReturn(Optional.of(member))
+					.thenThrow(new RuntimeException())
+					.thenReturn(Optional.empty());
+```
+
+- 첫 번째 객체 리턴
+- 두 번째 예외 리턴
+- 세 번째 비어있는 객체 리턴
+
+
+
+### Mock 객체 확인
+
+- Mock 객체가 어떻게 사용 되었는지 확인할 수 있다.
+  - 몇 번 호출되었는지, 최소 한 번은 호출되었는지, 전혀 호출되지 않았는지
+  - 어떤 순서대로 호출했는지
+  - 특정 시간 이내에 호출 됐는지
+  - 특정 시점 이후에 아무 일도 벌어지지 않았는지
+
+
+
+> 몇 번 호출 되었는지
+
+```java
+verify(memberService, times(1)).notify(any());
+```
+
+- notify메서드를 호출 안했을 경우 에러 호출
+
+
+
+> 전혀 호출되지 않아야하는 경우
+
+```
+verify(memberService, never()).validate(any());
+```
+
+
+
+
+

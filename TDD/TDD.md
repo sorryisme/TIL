@@ -294,3 +294,42 @@ verify(memberService, never()).validate(any());
 
 
 
+### Mockito BDD 
+
+- 어플리케이션이 어떻게 행동해야하는지 공통된 이해 구성하는 방법
+
+- 행동에 대한 스펙 
+
+  - Title
+  - Narrative
+    - As a : 역할
+    -  I want : 원하는 것
+    -  so that : 그 결과
+  - Acceptance criteria
+    - Given : 상황이 주어졌을 때 
+    - When : 어떤 행위를 하면
+    - Then : 그 결과 
+
+  
+
+  > when  -> given
+
+  ```java
+  when(memberService.findById(1L)).thenReturn(Optional.of(member));
+  given(memberService.findById(1L)).willReturn(Optional.of(member));
+  ```
+
+  
+
+  > verify -> then
+
+  ```
+  verify(memberService, times(1)).notify(study);
+  then(memberService).should(times(1)).notify(study);
+  ```
+
+  
+
+  
+
+  
